@@ -34,4 +34,3 @@ databases:
     databaseName: emidsportal
     user: portal
     plan: basic-256mb
-    mysqlVersion: "8"
