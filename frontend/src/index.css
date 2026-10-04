@@ -1,0 +1,55 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+html {
+  scroll-behavior: smooth;
+}
+
+/* Company laptops run display scaling (125–150%), so the browser's effective
+   viewport sits near ~1263px after the scrollbar. Lock the desktop density
+   to the 90%-zoom look the team prefers; small screens stay unscaled. */
+@media (min-width: 1024px) {
+  html {
+    zoom: 0.9;
+  }
+}
+
+body {
+  @apply font-sans bg-emids-mist text-emids-navy antialiased;
+}
+
+.emids-gradient {
+  background: linear-gradient(96deg, #9dc6cc 0%, #72b3be 40%, #57a6b3 78%, #66a5b1 100%);
+}
+
+.emids-gradient-red {
+  background: linear-gradient(135deg, #e9212d 0%, #b7151f 100%);
+}
+
+.hero-surface {
+  background:
+    radial-gradient(1200px 420px at 88% -10%, rgba(82, 176, 189, 0.22), transparent 62%),
+    radial-gradient(900px 380px at -6% 110%, rgba(233, 33, 45, 0.16), transparent 55%),
+    linear-gradient(112deg, #0b1220 0%, #0f2440 58%, #0a0a0a 100%);
+}
+
+.card-title {
+  @apply text-[17px] font-bold tracking-tight text-emids-navy;
+}
+
+.card-sub {
+  @apply text-[11px] font-semibold tracking-[0.14em] uppercase text-emids-tealdeep;
+}
+
+.thin-scroll::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+.thin-scroll::-webkit-scrollbar-thumb {
+  background: #d3d7dd;
+  border-radius: 999px;
+}
+.thin-scroll::-webkit-scrollbar-track {
+  background: transparent;
+}

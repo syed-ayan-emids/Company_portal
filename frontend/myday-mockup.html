@@ -1,0 +1,211 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>My Day — mockup</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=Playfair+Display:ital,wght@1,600&display=swap" rel="stylesheet" />
+<style>
+  :root {
+    --red: #E9212D; --reddark: #B7151F; --teal: #52B0BD; --tealdeep: #2A7682;
+    --tealsky: #9DC6CC; --tealsoft: #EAF4F5; --amber: #FFB21C; --navy: #0F2440;
+    --ink: #0A0A0A; --paper: #FEFEFE; --mist: #F4F5F7; --line: #E6E6E6;
+  }
+  * { box-sizing: border-box; margin: 0; }
+  body {
+    font-family: Inter, "Segoe UI", system-ui, sans-serif;
+    background: var(--mist); color: var(--navy);
+    padding: 40px 48px 80px; zoom: 0.9;
+  }
+  h1.page { font-size: 20px; font-weight: 800; letter-spacing: -0.01em; margin-bottom: 4px; }
+  p.sub { font-size: 12.5px; color: rgba(15,36,64,0.5); margin-bottom: 28px; }
+  .group-label { font-size: 10.5px; font-weight: 800; letter-spacing: .18em; text-transform: uppercase; color: rgba(15,36,64,.35); margin: 34px 0 10px; }
+
+  .hero-mini {
+    background:
+      radial-gradient(700px 200px at 85% -40%, rgba(82,176,189,.25), transparent 60%),
+      linear-gradient(112deg, #0b1220 0%, #0F2440 60%, #0A0A0A 100%);
+    border-radius: 24px; padding: 26px 32px; color: white; margin-bottom: 18px;
+  }
+  .hero-mini .kicker { display:flex; align-items:center; gap:8px; font-size:10px; font-weight:800; letter-spacing:.22em; color: var(--tealsky); text-transform: uppercase; }
+  .hero-mini .kicker .dot { width:7px; height:7px; border-radius:50%; background: var(--teal); }
+  .hero-mini h3 { font-size: 20px; font-weight: 800; margin-top: 8px; }
+  .hero-mini h3 em { font-family: "Playfair Display", serif; font-weight:600; color: var(--tealsky); font-size: 17px; margin-left: 10px; }
+  .hero-mini p { font-size: 12.5px; color: rgba(255,255,255,.6); margin-top: 6px; max-width: 520px; }
+
+  .card { background: var(--paper); border: 1px solid var(--line); border-radius: 26px; box-shadow: 0 1px 2px rgba(10,10,10,.04), 0 12px 32px -16px rgba(15,36,64,.12); }
+
+  /* ============ VARIANT A — one-line strip ============ */
+  .vA { display: flex; align-items: stretch; }
+  .vA .who { width: 172px; border-right: 1px solid var(--line); padding: 20px 22px; display: flex; flex-direction: column; gap: 10px; }
+  .vA .who .t { font-size: 16px; font-weight: 800; letter-spacing: -0.01em; }
+  .vA .who .d { font-size: 11px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(15,36,64,.4); }
+  .vA .who .meter { margin-top: auto; }
+  .vA .who .meter .row { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 700; color: rgba(15,36,64,.5); margin-bottom: 5px; }
+  .vA .who .meter .bar { height: 5px; border-radius: 99px; background: var(--mist); overflow: hidden; }
+  .vA .who .meter .bar i { display: block; height: 100%; width: 40%; border-radius: 99px; background: linear-gradient(90deg, var(--teal), var(--tealdeep)); }
+  .vA .flow { flex: 1; overflow: hidden; position: relative; padding: 0 26px; }
+  .vA .line { position: absolute; top: 86px; left: 26px; right: 26px; height: 1px; background: var(--line); }
+  .vA .nowflag { position: absolute; left: 47%; top: 24px; bottom: 18px; width: 2px; background: var(--red); opacity: .8; }
+  .vA .nowflag span { position: absolute; top: -2px; left: 8px; font-size: 9.5px; font-weight: 800; letter-spacing: .12em; color: var(--red); text-transform: uppercase; background: #fff; padding: 1px 6px; border-radius: 6px; border: 1px solid rgba(233,33,45,.25); }
+  .vA .items { display: flex; gap: 14px; align-items: flex-start; height: 100%; }
+  .item { min-width: 168px; max-width: 190px; padding-top: 64px; position: relative; }
+  .item .time { position: absolute; top: 26px; font-size: 10.5px; font-weight: 800; letter-spacing: .06em; color: rgba(15,36,64,.45); }
+  .item .pin { position: absolute; top: 82.5px; left: 0; width: 9px; height: 9px; border-radius: 50%; background: var(--paper); border: 2.5px solid var(--teal); }
+  .item.meeting .pin { border-color: var(--teal); }
+  .item.task .pin { border-color: var(--amber); }
+  .item.overdue .pin { border-color: var(--red); }
+  .item.done .pin { border-color: #16a34a; }
+  .item .txt { font-size: 12.5px; font-weight: 600; line-height: 1.25; margin-top: -68px; }
+  .item .tag { margin-top: 5px; display: flex; align-items: center; gap: 6px; }
+  .chip { font-size: 9.5px; font-weight: 800; letter-spacing: .1em; text-transform: uppercase; border-radius: 8px; padding: 3px 8px; }
+  .chip.join { background: var(--paper); color: var(--tealdeep); border: 1px solid var(--line); }
+  .chip.join.red { background: linear-gradient(135deg, var(--red), var(--reddark)); color: #fff; border: none; box-shadow: 0 6px 16px -6px rgba(233,33,45,.5); }
+  .chip.done { background: #ecfdf5; color: #16a34a; }
+  .chip.due { background: #fffbeb; color: #b45309; }
+  .chip.over { background: #fef2f2; color: var(--red); }
+  .chip.dim { color: rgba(15,36,64,.35); font-weight: 700; }
+  .item.future { opacity: .55; }
+
+  /* ============ VARIANT B — two columns ============ */
+  .vB { padding: 20px 24px 22px; }
+  .vB .head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+  .vB .head .t { font-size: 16px; font-weight: 800; }
+  .vB .head .t small { display:block; font-size: 10.5px; font-weight: 700; letter-spacing: .14em; text-transform: uppercase; color: rgba(15,36,64,.4); margin-top: 2px; }
+  .vB .head .meter { width: 210px; text-align: right; }
+  .vB .head .meter .row { display: flex; justify-content: space-between; font-size: 10.5px; font-weight: 700; color: rgba(15,36,64,.5); margin-bottom: 5px; }
+  .vB .head .meter .bar { height: 5px; border-radius: 99px; background: var(--mist); overflow: hidden; }
+  .vB .head .meter .bar i { display: block; height: 100%; width: 40%; background: linear-gradient(90deg, #16a34a, #4ade80); border-radius: 99px; }
+  .vB .cols { display: grid; grid-template-columns: 1fr 1fr; gap: 0 36px; }
+  .vB .col h4 { font-size: 10.5px; font-weight: 800; letter-spacing: .16em; text-transform: uppercase; color: var(--tealdeep); margin: 8px 0 6px; }
+  .vB .row { display: flex; align-items: center; gap: 12px; padding: 9px 0; border-top: 1px solid var(--line); }
+  .vB .row:first-of-type { border-top: none; }
+  .vB .row .time { width: 64px; font-size: 11.5px; font-weight: 800; color: rgba(15,36,64,.55); }
+  .vB .row .txt { flex: 1; min-width: 0; }
+  .vB .row .txt b { display: block; font-size: 13px; font-weight: 600; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .vB .row .txt span { font-size: 10.5px; color: rgba(15,36,64,.4); }
+  .vB .icon { width: 30px; height: 30px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 13px; }
+  .ic-meet { background: var(--tealsoft); color: var(--tealdeep); }
+  .ic-task { background: #fffbeb; color: #b45309; }
+  .ic-over { background: #fef2f2; color: var(--red); }
+  .ic-tix { background: #eef2ff; color: #4f46e5; }
+  .strike { text-decoration: line-through; text-decoration-color: #16a34a; text-decoration-thickness: 2px; color: rgba(15,36,64,.45); }
+  .btn-join { background: linear-gradient(135deg, var(--red), var(--reddark)); color: #fff; font-size: 10px; font-weight: 800; letter-spacing: .1em; padding: 6px 12px; border-radius: 10px; }
+  .btn-done { background: #eef2ff; color: #4f46e5; font-size: 10px; font-weight: 800; letter-spacing: .1em; padding: 6px 12px; border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<h1 class="page">"My Day" — two variants</h1>
+<p class="sub">Slot sits between the hero banner and the widget cards. Same emids card language, zero extra chrome.</p>
+
+<div class="hero-mini">
+  <div class="kicker"><span class="dot"></span> Global Update</div>
+  <h3>Company Town Hall<em>Auditorium, Building A</em></h3>
+  <p>Quarterly all-hands with leadership Q&A.</p>
+</div>
+
+<div class="group-label">Variant A — single-line timeline (fastest read)</div>
+<div class="card vA">
+  <div class="who">
+    <span class="t">My Day</span>
+    <span class="d">Sat · Oct 4</span>
+    <div class="meter">
+      <div class="row"><span>Tasks</span><span>2 of 5 done</span></div>
+      <div class="bar"><i></i></div>
+    </div>
+  </div>
+  <div class="flow">
+    <div class="line"></div>
+    <div class="nowflag"><span>Now</span></div>
+    <div class="items">
+      <div class="item done">
+        <span class="time">09:30</span><span class="pin"></span>
+        <div class="txt">Platform Stand-up</div>
+        <div class="tag"><span class="chip done">✓ attended</span></div>
+      </div>
+      <div class="item meeting">
+        <span class="time">12:00</span><span class="pin"></span>
+        <div class="txt">Model Review: RAG Pipeline</div>
+        <div class="tag"><span class="chip join red">Join</span><span class="chip dim">Teams</span></div>
+      </div>
+      <div class="item overdue">
+        <span class="time">13:00</span><span class="pin"></span>
+        <div class="txt">Review PR #428</div>
+        <div class="tag"><span class="chip over">Overdue</span></div>
+      </div>
+      <div class="item task">
+        <span class="time">15:00</span><span class="pin"></span>
+        <div class="txt">Prepare Monthly AI Lab Demo</div>
+        <div class="tag"><span class="chip due">Due today</span></div>
+      </div>
+      <div class="item future">
+        <span class="time">16:00</span><span class="pin"></span>
+        <div class="txt">1:1 with Manager</div>
+        <div class="tag"><span class="chip dim">Teams</span></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="group-label">Variant B — calmer two-column card</div>
+<div class="card vB">
+  <div class="head">
+    <div>
+      <div class="t">My Day</div>
+      <small>Saturday · October 4 · 2 meetings · 5 tasks</small>
+    </div>
+    <div class="meter">
+      <div class="row"><span>3 of 5 done</span><span>2 to go</span></div>
+      <div class="bar"><i></i></div>
+    </div>
+  </div>
+  <div class="cols">
+    <div class="col">
+      <h4>Meetings</h4>
+      <div class="row">
+        <span class="time">09:30</span>
+        <span class="icon ic-meet">▣</span>
+        <span class="txt"><b class="strike">Platform Stand-up</b><span>Zoom · finished</span></span>
+      </div>
+      <div class="row">
+        <span class="time">12:00</span>
+        <span class="icon ic-meet">▣</span>
+        <span class="txt"><b>Model Review: RAG Pipeline</b><span>Microsoft Teams</span></span>
+        <span class="btn-join">JOIN</span>
+      </div>
+      <div class="row">
+        <span class="time">16:00</span>
+        <span class="icon ic-meet">▣</span>
+        <span class="txt"><b>1:1 with Manager</b><span>Microsoft Teams</span></span>
+      </div>
+    </div>
+    <div class="col">
+      <h4>Tasks &amp; tickets</h4>
+      <div class="row">
+        <span class="icon ic-over">!</span>
+        <span class="txt"><b>Review PR #428</b><span>Was due Oct 2</span></span>
+        <span class="btn-done">OPEN</span>
+      </div>
+      <div class="row">
+        <span class="icon ic-task">✓</span>
+        <span class="txt"><b>Prepare Monthly AI Lab Demo</b><span>Due today</span></span>
+      </div>
+      <div class="row">
+        <span class="icon ic-task">✓</span>
+        <span class="txt"><b>Update project status</b><span>Before Monday sync</span></span>
+      </div>
+      <div class="row">
+        <span class="icon ic-task">✓</span>
+        <span class="txt"><b class="strike">Submit timesheet</b><span>Done · Fri</span></span>
+      </div>
+      <div class="row">
+        <span class="icon ic-tix">◈</span>
+        <span class="txt"><b>HD-1055 · Second monitor</b><span>Support · In progress</span></span>
+      </div>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

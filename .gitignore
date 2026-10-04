@@ -1,0 +1,22 @@
+# secrets & local state — never commit
+backend/.env
+.env
+*.local
+
+# deps / builds
+frontend/node_modules
+frontend/dist
+backend/__pycache__
+backend/app/__pycache__
+**/__pycache__
+*.pyc
+
+# editor / local files
+.claude
+.vscode
+.DS_Store
+Thumbs.db
+
+# scratch
+scripts/*.log
+nohup.out

@@ -1,0 +1,37 @@
+services:
+  - type: web
+    name: emids-portal
+    runtime: docker
+    plan: starter
+    dockerfilePath: ./Dockerfile
+    healthCheckPath: /api/health
+    envVars:
+      - key: DB_HOST
+        fromDatabase:
+          name: emids-portal-db
+          property: host
+      - key: DB_PORT
+        value: "3306"
+      - key: DB_USER
+        fromDatabase:
+          name: emids-portal-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: emids-portal-db
+          property: password
+      - key: DB_NAME
+        fromDatabase:
+          name: emids-portal-db
+          property: database
+      - key: JWT_SECRET
+        generateValue: true
+      - key: APP_PORT
+        value: "8000"
+
+databases:
+  - name: emids-portal-db
+    databaseName: emidsportal
+    user: portal
+    plan: basic-256mb
+    mysqlVersion: "8"
