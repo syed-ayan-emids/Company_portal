@@ -1,18 +1,15 @@
-"""Deploys the portal to a FRESH database (server SDK done) — every table and demo data is recreated.
+"""Bootstraps a FRESH database (Render/Aiven/local) — creates every table and
+demo data for the portal idempotently: tables are CREATE IF NOT EXISTS, rows
+only inserted when a table is empty. Demo dates are generated relative to the
+seed day, so the demo always looks current.
 
-Usage: python seed_full.py
-At seed time, `all tables created with CREATE TABLE IF NOT EXISTS (also for the
-first run in Render), rows only inserted when the table is empty.
-Demo dates for email tasks are computed relative to DATE (today), so the
-demo stays fresh on any cloud server at any date.
-
-Existing environments are untouched (safe to re-run).
+Works with both dialects:
+    * MySQL  (default)          - configured via DB_HOST/DB_USER/...
+    * Postgres (Render)         - configured via DATABASE_URL=postgresql://...
 """
 import datetime as _dt
 import sys
 from datetime import timedelta
-
-import pymysql
 
 from app import config, security
 
@@ -20,7 +17,16 @@ from app import config, security
 def today_plus(days):
     return None if days is None else (config_now().date() + timedelta(days=days))
 
-BASE_TABLES = {
+
+def rel(days, hour, minute=0):
+    return (config_now() + timedelta(days=days)).replace(hour=hour, minute=minute, second=0, microsecond=0)
+
+
+def config_now():
+    return _dt.datetime.now()
+
+
+MYSQL_TABLES = {
     "employees": """
         CREATE TABLE IF NOT EXISTS employees (
             id INT AUTO_INCREMENT PRIMARY KEY,
@@ -155,6 +161,143 @@ BASE_TABLES = {
     """,
 }
 
+POSTGRES_TABLES = {
+    "employees": """
+        CREATE TABLE IF NOT EXISTS employees (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(120) NOT NULL,
+            email VARCHAR(255) NOT NULL UNIQUE,
+            job_title VARCHAR(120) NOT NULL,
+            department VARCHAR(120) NOT NULL,
+            avatar_url VARCHAR(500) NOT NULL DEFAULT ''
+        )
+    """,
+    "quick_links": """
+        CREATE TABLE IF NOT EXISTS quick_links (
+            id SERIAL PRIMARY KEY,
+            name VARCHAR(120) NOT NULL,
+            icon VARCHAR(120) NOT NULL,
+            url VARCHAR(500) NOT NULL,
+            display_order INT NOT NULL DEFAULT 0
+        )
+    """,
+    "briefings": """
+        CREATE TABLE IF NOT EXISTS briefings (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            category VARCHAR(120) NOT NULL,
+            priority VARCHAR(40) NOT NULL,
+            source VARCHAR(120) NOT NULL,
+            action_url VARCHAR(500) NOT NULL DEFAULT '',
+            due_date DATE NULL,
+            created_at TIMESTAMP NOT NULL
+        )
+    """,
+    "events": """
+        CREATE TABLE IF NOT EXISTS events (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            category VARCHAR(120) NOT NULL,
+            location VARCHAR(255) NOT NULL,
+            start_datetime TIMESTAMP NOT NULL,
+            end_datetime TIMESTAMP NOT NULL
+        )
+    """,
+    "meetings": """
+        CREATE TABLE IF NOT EXISTS meetings (
+            id SERIAL PRIMARY KEY,
+            employee_id INT NOT NULL REFERENCES employees(id),
+            title VARCHAR(255) NOT NULL,
+            platform VARCHAR(120) NOT NULL,
+            meeting_url VARCHAR(500) NOT NULL DEFAULT '',
+            start_datetime TIMESTAMP NOT NULL,
+            end_datetime TIMESTAMP NOT NULL
+        )
+    """,
+    "todos": """
+        CREATE TABLE IF NOT EXISTS todos (
+            id SERIAL PRIMARY KEY,
+            employee_id INT NOT NULL REFERENCES employees(id),
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            priority VARCHAR(40) NOT NULL DEFAULT 'MEDIUM',
+            status VARCHAR(40) NOT NULL DEFAULT 'TODO',
+            due_date DATE NULL,
+            source_type VARCHAR(40) NOT NULL DEFAULT 'MANUAL',
+            source_id INT NULL,
+            created_at TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP NOT NULL
+        )
+    """,
+    "tickets": """
+        CREATE TABLE IF NOT EXISTS tickets (
+            id SERIAL PRIMARY KEY,
+            employee_id INT NOT NULL REFERENCES employees(id),
+            ticket_number VARCHAR(40) NOT NULL UNIQUE,
+            title VARCHAR(255) NOT NULL,
+            category VARCHAR(120) NOT NULL,
+            status VARCHAR(40) NOT NULL,
+            created_at TIMESTAMP NOT NULL,
+            updated_at TIMESTAMP NOT NULL
+        )
+    """,
+    "announcements": """
+        CREATE TABLE IF NOT EXISTS announcements (
+            id SERIAL PRIMARY KEY,
+            title VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            category VARCHAR(120) NOT NULL,
+            importance VARCHAR(40) NOT NULL,
+            published_at TIMESTAMP NOT NULL
+        )
+    """,
+    "portal_users": """
+        CREATE TABLE IF NOT EXISTS portal_users (
+            id SERIAL PRIMARY KEY,
+            employee_id INT NOT NULL UNIQUE REFERENCES employees(id),
+            username VARCHAR(255) NOT NULL UNIQUE,
+            password_hash VARCHAR(255) NOT NULL,
+            role VARCHAR(40) NOT NULL DEFAULT 'employee',
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """,
+    "portal_chat_messages": """
+        CREATE TABLE IF NOT EXISTS portal_chat_messages (
+            id SERIAL PRIMARY KEY,
+            employee_id INT NOT NULL REFERENCES employees(id),
+            role VARCHAR(16) NOT NULL,
+            content TEXT NOT NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """,
+    "portal_projects": """
+        CREATE TABLE IF NOT EXISTS portal_projects (
+            id SERIAL PRIMARY KEY,
+            employee_id INT NULL,
+            name VARCHAR(255) NOT NULL,
+            description TEXT NOT NULL,
+            role VARCHAR(120) NOT NULL DEFAULT '',
+            status VARCHAR(40) NOT NULL DEFAULT 'ACTIVE',
+            progress SMALLINT NOT NULL DEFAULT 0,
+            due_date DATE NULL,
+            created_at TIMESTAMP NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )
+    """,
+}
+
+POSTGRES_INDEXES = {
+    "events": "CREATE INDEX IF NOT EXISTS idx_events_start ON events(start_datetime)",
+    "meetings": "CREATE INDEX IF NOT EXISTS idx_meetings_emp_start ON meetings(employee_id, start_datetime)",
+    "todos": "CREATE INDEX IF NOT EXISTS idx_todos_emp ON todos(employee_id)",
+    "tickets": "CREATE INDEX IF NOT EXISTS idx_tickets_emp ON tickets(employee_id)",
+    "portal_chat_messages": "CREATE INDEX IF NOT EXISTS idx_pcm_emp_time ON portal_chat_messages(employee_id, created_at)",
+    "portal_projects": "CREATE INDEX IF NOT EXISTS idx_pp_emp ON portal_projects(employee_id)",
+    "portal_users": "CREATE INDEX IF NOT EXISTS idx_pu_emp ON portal_users(employee_id)",
+    "briefings": "CREATE INDEX IF NOT EXISTS idx_briefings_cat ON briefings(category)",
+}
+
 EMPLOYEES = [
     ("Syed Ayan", "syed.ayan@emids.com", "AI Engineer", "Artificial Intelligence", "https://i.pravatar.cc/80?u=syedayan"),
     ("Sara Malik", "sara.malik@emids.com", "Data Scientist", "Data & Analytics", "https://i.pravatar.cc/80?u=sara"),
@@ -169,19 +312,19 @@ BRIEFINGS = [
 ]
 
 
-def rel(days, hour, minute=0):
-    return (config_now() + timedelta(days=days)).replace(hour=hour, minute=minute, second=0, microsecond=0)
-
-
-def config_now():
-    return _dt.datetime.now()
-
-
 def seed(conn):
     cur = conn.cursor()
+    backend = config.DB_BACKEND
+    tables = POSTGRES_TABLES if backend == "postgres" else MYSQL_TABLES
 
-    for name, sql in BASE_TABLES.items():
+    for name, sql in tables.items():
         cur.execute(sql)
+    if backend == "postgres":
+        seen = set()
+        for _, sql in POSTGRES_INDEXES.items():
+            if sql not in seen:
+                cur.execute(sql)
+                seen.add(sql)
 
     def insert_if_empty(table, sql, rows):
         cur.execute(f"SELECT COUNT(*) AS c FROM {table}")
@@ -266,26 +409,26 @@ def seed(conn):
     n += insert_if_empty(
         "tickets",
         """INSERT INTO tickets (employee_id, ticket_number, title, category, status, created_at, updated_at)
-           VALUES (%s, %s, %s, %s, %s, NOW() - INTERVAL %s DAY, NOW())""",
+           VALUES (%s, %s, %s, %s, %s, %s, %s)""",
         [
-            (ayan, "HD-1048", "Laptop VPN connection issue", "IT Hardware", "IN_PROGRESS", 4),
-            (ayan, "HD-1039", "Access to data warehouse", "Access", "WAITING", 7),
-            (ayan, "HD-1021", "Email client not syncing", "Software", "RESOLVED", 13),
-            (ayan, "HD-1055", "Requesting a second monitor", "IT Hardware", "OPEN", 2),
-            (sara, "HD-2001", "Sara's ticket", "Access", "OPEN", 2),
+            (ayan, "HD-1048", "Laptop VPN connection issue", "IT Hardware", "IN_PROGRESS", now - timedelta(days=4), now - timedelta(days=2)),
+            (ayan, "HD-1039", "Access to data warehouse", "Access", "WAITING", now - timedelta(days=7), now - timedelta(days=5)),
+            (ayan, "HD-1021", "Email client not syncing", "Software", "RESOLVED", now - timedelta(days=13), now - timedelta(days=10)),
+            (ayan, "HD-1055", "Requesting a second monitor", "IT Hardware", "OPEN", now - timedelta(days=2), now - timedelta(days=2)),
+            (sara, "HD-2001", "Sara's ticket", "Access", "OPEN", now - timedelta(days=2), now - timedelta(days=2)),
         ],
     )
 
     n += insert_if_empty(
         "announcements",
         """INSERT INTO announcements (title, description, category, importance, published_at)
-           VALUES (%s, %s, %s, %s, NOW() - INTERVAL %s HOUR)""",
+           VALUES (%s, %s, %s, %s, %s)""",
         [
-            ("Q4 AI Lab registrations now open", "Registration for the Q4 AI Lab cohort is open until the end of the month. Join to work on applied LLM projects with the platform team.", "Engineering", "HIGH", 45),
-            ("New hybrid work policy effective next month", "Employees can now choose up to three remote days per week. Review the updated policy in the HR portal for full details.", "HR", "HIGH", 68),
-            ("Scheduled infrastructure maintenance", "The shared analytics cluster will be unavailable on Saturday between 02:00 and 04:00 AM for a scheduled upgrade.", "IT", "MEDIUM", 96),
-            ("Employee benefits open enrollment", "Annual benefits enrollment is live. Review health, dental and wellness options before the enrollment deadline.", "Benefits", "MEDIUM", 120),
-            ("Office closed for public holiday", "The office will be closed next Monday for a public holiday. Remote work support remains available.", "General", "LOW", 300),
+            ("Q4 AI Lab registrations now open", "Registration for the Q4 AI Lab cohort is open until the end of the month. Join to work on applied LLM projects with the platform team.", "Engineering", "HIGH", now - timedelta(hours=45)),
+            ("New hybrid work policy effective next month", "Employees can now choose up to three remote days per week. Review the updated policy in the HR portal for full details.", "HR", "HIGH", now - timedelta(hours=68)),
+            ("Scheduled infrastructure maintenance", "The shared analytics cluster will be unavailable on Saturday between 02:00 and 04:00 AM for a scheduled upgrade.", "IT", "MEDIUM", now - timedelta(hours=96)),
+            ("Employee benefits open enrollment", "Annual benefits enrollment is live. Review health, dental and wellness options before the enrollment deadline.", "Benefits", "MEDIUM", now - timedelta(hours=120)),
+            ("Office closed for public holiday", "The office will be closed next Monday for a public holiday. Remote work support remains available.", "General", "LOW", now - timedelta(hours=300)),
         ],
     )
 
@@ -312,11 +455,11 @@ def seed(conn):
             )
 
     conn.commit()
-    print(f"seed_full: created {len(BASE_TABLES)} tables, sent {n} demo rows (existing data untouched)")
+    print(f"seed_full[{backend}]: created {len(tables)} tables, sent {n} demo rows (existing data untouched)")
 
 
 def main():
-    from app import db as appdb  # reuseSSL handling
+    from app import db as appdb
     conn = appdb.get_connection()
     try:
         seed(conn)

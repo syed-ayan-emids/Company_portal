@@ -35,14 +35,14 @@ def dashboard(employee: dict = Depends(get_current_employee)):
     briefings = db.query(
         """SELECT b.id, b.title, b.description, b.category, b.priority, b.source, b.action_url, b.due_date, b.created_at
            FROM briefings b
-           ORDER BY COALESCE(b.due_date, DATE(b.created_at)), b.created_at DESC
+           ORDER BY COALESCE(b.due_date, CAST(b.created_at AS DATE)), b.created_at DESC
            LIMIT 6"""
     )
     actions = db.query(
         """SELECT t.id, t.title, t.description, t.priority, t.status, t.due_date, t.source_type, t.source_id
            FROM todos t
            WHERE t.employee_id = %s
-           ORDER BY (t.status = 'COMPLETED'), COALESCE(t.due_date, DATE '9999-12-31'), t.created_at
+           ORDER BY (t.status = 'COMPLETED'), COALESCE(t.due_date, CAST('9999-12-31' AS DATE)), t.created_at
            LIMIT 9""",
         (emp_id,),
     )
@@ -155,7 +155,7 @@ def projects(employee: dict = Depends(get_current_employee)):
         """SELECT id, employee_id, name, description, role, status, progress, due_date, created_at
            FROM portal_projects
            WHERE employee_id = %s OR employee_id IS NULL
-           ORDER BY FIELD(status, 'AT RISK', 'ACTIVE', 'PAUSED', 'PLANNING', 'DONE'), progress DESC
+           ORDER BY CASE WHEN status = 'AT RISK' THEN 0 WHEN status = 'ACTIVE' THEN 1 WHEN status = 'PAUSED' THEN 2 WHEN status = 'PLANNING' THEN 3 WHEN status = 'DONE' THEN 4 ELSE 5 END, progress DESC
            LIMIT 12""",
         (employee["id"],),
     )

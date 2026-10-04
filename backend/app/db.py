@@ -5,7 +5,7 @@ import pymysql
 from . import config
 
 
-def get_connection():
+def conn_mysql():
     kwargs = dict(
         host=config.DB_HOST,
         port=config.DB_PORT,
@@ -21,6 +21,19 @@ def get_connection():
 
         kwargs["ssl"] = ssl.create_default_context(ca=config.DB_SSL_CA)
     return pymysql.connect(**kwargs)
+
+
+def conn_postgres():
+    import psycopg
+    from psycopg.rows import dict_row
+
+    return psycopg.connect(config.DATABASE_URL, autocommit=True, row_factory=dict_row)
+
+
+def get_connection():
+    if config.DB_BACKEND == "postgres":
+        return conn_postgres()
+    return conn_mysql()
 
 
 @contextmanager

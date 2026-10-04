@@ -9,12 +9,12 @@ chat sidebar) and **privacy mode** for shared screens.
 
 ## Stack
 
-| Layer     | Tech                                                |
-|-----------|-----------------------------------------------------|
-| Frontend  | React 18 + Vite + Tailwind CSS 3 (Node 20, in WSL)  |
-| Backend   | Python 3.14 · FastAPI · PyMySQL                     |
-| Database  | MySQL 8.4 (reuses the existing `chatbot` database)  |
-| Auth      | JWT in an HttpOnly cookie, PBKDF2 password hashing  |
+| Layer     | Tech                                                          |
+|-----------|---------------------------------------------------------------|
+| Frontend  | React 18 + Vite + Tailwind CSS 3 (Node 20, in WSL)            |
+| Backend   | Python 3.14 · FastAPI · PyMySQL (local) / psycopg (Postgres)  |
+| Database  | Dual dialect: MySQL 8.4 (local dev) or PostgreSQL 17 (Render) |
+| Auth      | JWT in an HttpOnly cookie, PBKDF2 password hashing            |
 
 ## Design notes (v3)
 
@@ -162,10 +162,12 @@ Free instances sleep (~50s cold start). Keep-alive pings to `/api/health`
 
 ### Database options
 
-- **Render managed MySQL** (Option A default; paid plan).
-- **Any public MySQL** (Aiven free tier, RDS…): set `DB_HOST/PORT/USER/
-  PASSWORD/NAME` (+ `DB_SSL_CA` = path to the provider's CA cert file when
-  TLS is mandatory). `seed_full.py` prepares everything on first boot.
+- **Render managed PostgreSQL** (Option A default, Postgres 17) — the
+  blueprint wires `DATABASE_URL` automatically.
+- **Any public MySQL** still works (Aiven free tier, RDS…): set the
+  `DB_HOST/PORT/USER/PASSWORD/NAME` env vars instead (+ `DB_SSL_CA` = path
+  to the provider's CA cert file when TLS is mandatory). `seed_full.py`
+  prepares the MySQL schema on first boot in that mode too.
 - **On-prem company MySQL**: only works from a host that can reach it; cloud
   platforms can't see your LAN. If the company DB is on VPN/RDS, deploy from
   a VPS with private connectivity instead, or schedule a data sync.
@@ -173,15 +175,24 @@ Free instances sleep (~50s cold start). Keep-alive pings to `/api/health`
 
 ### Migration from existing data
 
-To carry your current `chatbot` DB's rows into the cloud DB instead of the
-fresh demo set: `mysqldump -u chatbot_user -p123456789 chatbot > dump.sql`
-from WSL, then `mysql -h <cloud-host> -u <user> -p <db> < dump.sql`
-(place dumps in the cloud DB, not through the app).
+To carry your current `chatbot` DB's rows into a cloud **MySQL** instead of
+the fresh demo set: `mysqldump -u chatbot_user -p123456789 chatbot > dump.sql`
+from WSL, then `mysql -h <cloud-host> -u <user> -p <db> < dump.sql`. To load
+it into the Render **Postgres** instead, do the same dump and convert types
+(SERIAL/TIMESTAMP per `seed_full.py`'s Postgres DDL) — or simply start with
+the seeded demo set and import real records through the APIs.
 
 ## Configuration
 
-`backend/.env` — DB connection (host 127.0.0.1, user `chatbot_user`),
-JWT secret, ports. Update the values here if your MySQL credentials change.
+**Local dev (MySQL):** `backend/.env` — DB connection (host 127.0.0.1, user
+`chatbot_user`), JWT secret, ports. Update the values here if your MySQL
+credentials change.
+
+**Render (Postgres):** no `.env` needed — set one environment variable on the
+service, `DATABASE_URL` (Render's Blueprint syncs it automatically from the
+database resource). When `DATABASE_URL` is set the backend uses psycopg and
+ignores the `DB_*` MySQL settings; `seed_full.py` + `portal_setup.py`
+auto-create the schema on first boot.
 
 ## Ports in use on this machine
 

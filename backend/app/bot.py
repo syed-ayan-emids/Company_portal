@@ -203,7 +203,7 @@ def _reply_projects(employee) -> str:
     rows = db.query(
         """SELECT name, status, progress, role, due_date FROM portal_projects
            WHERE employee_id = %s OR employee_id IS NULL
-           ORDER BY FIELD(status, 'AT RISK', 'ACTIVE', 'PAUSED', 'PLANNING', 'DONE'), progress DESC
+           ORDER BY CASE WHEN status = 'AT RISK' THEN 0 WHEN status = 'ACTIVE' THEN 1 WHEN status = 'PAUSED' THEN 2 WHEN status = 'PLANNING' THEN 3 WHEN status = 'DONE' THEN 4 ELSE 5 END, progress DESC
            LIMIT 6""",
         (employee["id"],),
     )
